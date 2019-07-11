@@ -10,9 +10,17 @@ namespace Microsoft.Bot.Builder.EchoBot
 {
     public class AdapterWithErrorHandler : BotFrameworkHttpAdapter
     {
-        public AdapterWithErrorHandler(IConfiguration configuration, ILogger<BotFrameworkHttpAdapter> logger, ConversationState conversationState = null)
+        public AdapterWithErrorHandler(
+            IConfiguration configuration, 
+            ILogger<BotFrameworkHttpAdapter> logger,
+            UserState userState,
+            ConversationState conversationState
+            )
             : base(configuration, logger)
         {
+            
+            Use(new AutoSaveStateMiddleware(userState, conversationState));
+
             OnTurnError = async (turnContext, exception) =>
             {
                 // Log any leaked exception from the application.

@@ -32,10 +32,7 @@ namespace Microsoft.BotBuilderSamples.Bots
 
             await _userMsgCount.SetAsync(turnContext, umc);
             await _conversationMsgCount.SetAsync(turnContext, cmc);
-
-            await _conversationState.SaveChangesAsync(turnContext, cancellationToken: cancellationToken);
-            await _userState.SaveChangesAsync(turnContext, cancellationToken: cancellationToken);
-
+           
             await turnContext.SendActivityAsync(MessageFactory.Text($"Echo: {turnContext.Activity.Text}"), cancellationToken);
             await turnContext.SendActivityAsync(MessageFactory.Text($"Number of messages from user: {umc}"), cancellationToken);
             await turnContext.SendActivityAsync(MessageFactory.Text($"Number of messages in conversation: {cmc}"), cancellationToken);
