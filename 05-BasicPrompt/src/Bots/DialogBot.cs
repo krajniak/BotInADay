@@ -14,6 +14,7 @@ namespace EchoBot.Bots
     {
         private readonly ConversationState _conversationState;
         private readonly UserState _userState;
+        private readonly IStatePropertyAccessor<string> _usernameProperty;
         private readonly DialogSet _dialogs;
 
         public DialogBot(ConversationState conversationState, UserState userState)
@@ -21,12 +22,14 @@ namespace EchoBot.Bots
             _conversationState = conversationState;
             _userState = userState;
 
+            _usernameProperty = _userState.CreateProperty<string>("username");
+
             var dialogStateProperty = _conversationState
                 .CreateProperty<DialogState>(nameof(DialogState));
             _dialogs = new DialogSet(dialogStateProperty);
             _dialogs.Add(new EchoDialog(nameof(EchoDialog)));
+            _dialogs.Add(new TextPrompt("usernamePrompt"));
         }
-
 
         protected async override Task OnMessageActivityAsync(
             ITurnContext<IMessageActivity> turnContext,
@@ -37,10 +40,19 @@ namespace EchoBot.Bots
             if (dc.ActiveDialog != null)
             {
                 var result = await dc.ContinueDialogAsync();
+                if(result.Status == DialogTurnStatus.Complete && result.Result is string username)
+                    await _usernameProperty.SetAsync(turnContext, username, cancellationToken);
             }
             else
             {
-                await dc.BeginDialogAsync(nameof(EchoDialog));
+                if (string.IsNullOrEmpty(
+                    await _usernameProperty.GetAsync(turnContext, () => "", cancellationToken)))
+                {
+                    var message = MessageFactory.Text("What is your name?");
+                    await dc.BeginDialogAsync("usernamePrompt", new PromptOptions { Prompt = message });
+                }
+                else
+                    await dc.BeginDialogAsync(nameof(EchoDialog));
             }
         }
 
